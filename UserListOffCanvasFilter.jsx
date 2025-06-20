@@ -1,5 +1,6 @@
 // src/components/filters/UserListOffCanvasFilter.jsx
 import React, { useState, useEffect } from "react";
+import { Buttons } from "../buttons/buttons"; // Adjust path as needed
 import { TextField } from "@mui/material";
 import OffCanvasFilter from "./OffCanvasFilter"; // Adjust path as needed
 import { useUserInfoStore } from "../../stateStore/userInfoStore"; // Adjust path
@@ -36,7 +37,7 @@ const UserListOffCanvasFilter = ({
   ];
 
   const handleFilter = () => {
-    let filteredData = [...data]; // Create a copy to avoid mutating original data
+    let filteredData = [...data];
     if (accountOrName) {
       if (accountOrName.includes(" ")) {
         const [firstName, lastName] = accountOrName.split(" ");
@@ -60,7 +61,7 @@ const UserListOffCanvasFilter = ({
         filterValues.Status.includes("Active") &&
         filterValues.Status.includes("Inactive")
       ) {
-        // No filtering needed if both are selected
+        // No filtering if both are selected
       } else if (filterValues.Status.includes("Active")) {
         filteredData = filteredData.filter(
           (item) => item.appUserActive === "true" || item.appUserActive === true
@@ -79,7 +80,7 @@ const UserListOffCanvasFilter = ({
         filterValues.Role.includes("Non Admin") &&
         filterValues.Role.includes("Admin")
       ) {
-        // No filtering needed if all roles are selected
+        // No filtering if all roles are selected
       } else {
         filteredData = filteredData.filter((item) =>
           filterValues.Role.includes(item.roleDesc)
@@ -90,7 +91,7 @@ const UserListOffCanvasFilter = ({
     if (filterValues.Status?.length || filterValues.Role?.length || accountOrName) {
       onFilter(filteredData);
     }
-    setFilterTrigger(false); // Close off-canvas
+    setFilterTrigger(false);
   };
 
   const handleClearFilters = () => {
@@ -101,15 +102,13 @@ const UserListOffCanvasFilter = ({
       filterColumns.reduce((acc, column) => ({ ...acc, [column]: "" }), {})
     );
     onClearFilters();
-    setFilterTrigger(false); // Close off-canvas
+    setFilterTrigger(false);
   };
 
   const handleStatusCheckboxChange = (event) => {
     const { value, checked } = event.target;
     setSelectedCBStatusValues((prev) =>
-      checked
-        ? [...prev, value]
-        : prev.filter((val) => val !== value)
+      checked ? [...prev, value] : prev.filter((val) => val !== value)
     );
     setFilterValues((prev) => ({
       ...prev,
@@ -122,9 +121,7 @@ const UserListOffCanvasFilter = ({
   const handleRoleCheckboxChange = (event) => {
     const { value, checked } = event.target;
     setSelectedCBRoleValues((prev) =>
-      checked
-        ? [...prev, value]
-        : prev.filter((val) => val !== value)
+      checked ? [...prev, value] : prev.filter((val) => val !== value)
     );
     setFilterValues((prev) => ({
       ...prev,
@@ -140,12 +137,16 @@ const UserListOffCanvasFilter = ({
       type: "text",
       component: (
         <TextField
-          style={{ width: "100%", backgroundColor: "#fff" }}
+          style={{ width: "100%", backgroundColor: "#fff", marginBottom: "10px" }}
           id="accountOrName"
           type="text"
           placeholder="Enter account ID or name"
           value={accountOrName}
-          onChange={(e) => setAccountOrName(e.target.value)}
+          onChange={(e) => { e.stopPropagation(); setAccountOrName(e.target.value); }}
+          autoFocus
+          inputProps={{ "data-testid": "accountOrName-input" }}
+          onFocus={(e) => console.log("Input focused:", e.target.value)}
+          onBlur={(e) => console.log("Input blurred by:", document.activeElement)}
         />
       ),
     },
@@ -173,7 +174,25 @@ const UserListOffCanvasFilter = ({
       onApply={handleFilter}
       onClear={handleClearFilters}
       onToggle={() => setFilterTrigger((prev) => !prev)}
-      userName={cuUserName} // Pass userName for display if needed
+      userName={cuUserName}
+      renderButtons={(onApply, onClear) => (
+        <>
+          <Buttons
+            id="btnClear"
+            type="secondary"
+            value="Clear"
+            isDisabled={false}
+            clickHandler={onClear}
+          />
+          <Buttons
+            id="btnApply"
+            type="primary"
+            value="Apply"
+            isDisabled={false}
+            clickHandler={onApply}
+          />
+        </>
+      )}
     />
   );
 };

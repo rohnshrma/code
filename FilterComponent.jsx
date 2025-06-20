@@ -5,7 +5,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CheckboxGroup from "./CheckboxGroup";
+import CheckboxGroup from "./CheckboxGroup"; // Adjust path if needed
 import DateRangeFilter from "./DateRangeFilter"; // Adjust path if needed
 
 const FilterComponent = ({ filters }) => {

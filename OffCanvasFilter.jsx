@@ -1,9 +1,9 @@
 // src/components/filters/OffCanvasFilter.jsx
 import React, { useEffect, useRef } from "react";
 import FilterComponent from "./FilterComponent";
-import { Button, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 
-const OffCanvasFilter = ({ filters, triggerOpen, onClose, onApply, onClear, onToggle, userName }) => {
+const OffCanvasFilter = ({ filters, triggerOpen, onClose, onApply, onClear, onToggle, userName, renderButtons }) => {
   const offcanvasRef = useRef(null);
 
   useEffect(() => {
@@ -12,31 +12,64 @@ const OffCanvasFilter = ({ filters, triggerOpen, onClose, onApply, onClear, onTo
       import("bootstrap").then((bootstrap) => {
         offcanvas = new bootstrap.Offcanvas(offcanvasRef.current);
         offcanvas.show();
-      });
+        // Set focus to the first input and prevent focus trap interference
+        const firstInput = offcanvasRef.current.querySelector("input");
+        if (firstInput) {
+          firstInput.focus();
+          setTimeout(() => firstInput.focus(), 100); // Ensure focus after render
+        }
+      }).catch((err) => console.error("Bootstrap load error:", err));
     }
 
     const handleOutsideClick = (event) => {
-      if (offcanvasRef.current && !offcanvasRef.current.contains(event.target)) {
-        onClose();
+      if (offcanvasRef.current) {
+        const isOutside = !offcanvasRef.current.contains(event.target);
+        const isCloseButton = event.target.classList.contains("btn-close");
+        const isInteractive = event.target.tagName === "INPUT" || event.target.tagName === "BUTTON";
+        console.log("Click - Outside:", isOutside, "Target:", event.target.tagName, "Interactive:", isInteractive);
+        if (isOutside && !isInteractive && !isCloseButton) {
+          console.log("Closing off-canvas due to outside click");
+          onClose();
+        }
+      }
+    };
+
+    const handleFocusTrap = (event) => {
+      if (triggerOpen && offcanvasRef.current) {
+        const firstInput = offcanvasRef.current.querySelector("input");
+        if (firstInput && !offcanvasRef.current.contains(document.activeElement)) {
+          event.preventDefault();
+          firstInput.focus();
+          console.log("Focus trapped back to input");
+        }
       }
     };
 
     if (triggerOpen) {
       document.addEventListener("mousedown", handleOutsideClick);
+      document.addEventListener("focusin", handleFocusTrap);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
-      if (offcanvas) offcanvas?.hide();
+      document.removeEventListener("focusin", handleFocusTrap);
+      if (offcanvas) offcanvas.hide();
     };
   }, [triggerOpen, onClose]);
 
+  const handleCloseClick = () => {
+    console.log("Close button clicked");
+    onClose();
+  };
+
   return (
-    <div className="tableFilterButton">
-      <div className="actionbuttons">
-        <button onClick={onToggle} className="btn btn-primary">
-          Show Filter
-        </button>
+    <>
+      <div className="tableFilterButton">
+        <div className="actionbuttons">
+          <button onClick={onToggle} className="btn btn-primary">
+            Show Filter
+          </button>
+        </div>
       </div>
       <div
         className="offcanvas offcanvas-end"
@@ -52,10 +85,10 @@ const OffCanvasFilter = ({ filters, triggerOpen, onClose, onApply, onClear, onTo
             className="btn-close text-reset"
             data-bs-dismiss="offcanvas"
             aria-label="Close"
-            onClick={onClose}
+            onClick={handleCloseClick}
           />
         </div>
-        <div className="offcanvas-body" style={{ backgroundColor: "#f5f5f5" }}>
+        <div className="offcanvas-body" style={{ backgroundColor: "#fff", padding: "20px" }}>
           {userName && (
             <Typography variant="subtitle1" style={{ marginBottom: "10px" }}>
               Filtering for: {userName}
@@ -63,20 +96,11 @@ const OffCanvasFilter = ({ filters, triggerOpen, onClose, onApply, onClear, onTo
           )}
           <FilterComponent filters={filters} />
           <div className="filter-box-action" style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              variant="outlined"
-              onClick={onClear}
-              style={{ marginRight: "10px" }}
-            >
-              Clear
-            </Button>
-            <Button variant="contained" onClick={onApply}>
-              Apply
-            </Button>
+            {renderButtons ? renderButtons(onApply, onClear) : null}
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
